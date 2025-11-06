@@ -1,0 +1,65 @@
+QUICK SETUP FIXES
+=================
+
+ISSUE 1: Maps JavaScript API showing 100% errors
+-------------------------------------------------
+
+1. Go to: https://console.cloud.google.com/apis/credentials?project=passion-project-2eb1c
+
+2. Click on "Browser key (auto created by Firebase)"
+
+3. Scroll down to "API restrictions"
+
+4. Click "Restrict key" and make sure "Maps JavaScript API" is checked
+   OR set to "Don't restrict key" for testing
+
+5. Scroll to "Application restrictions"
+
+6. Set to "None" (temporarily for testing)
+   OR add these HTTP referrers:
+   - http://localhost:3000/*
+   - http://127.0.0.1:3000/*
+
+7. Click "Save"
+
+8. Wait 1-2 minutes for changes to propagate
+
+9. Restart your dev server and hard refresh browser (Cmd+Shift+R)
+
+
+ISSUE 2: Firestore 400 errors
+-------------------------------
+
+1. Go to: https://console.firebase.google.com/project/passion-project-2eb1c/firestore
+
+2. If you see "Create database", click it
+
+3. Select "Start in test mode"
+
+4. Choose a location (closest to you)
+
+5. Click "Enable"
+
+6. Wait for database to be created
+
+7. The app will now be able to connect to Firestore
+
+
+IMPORTANT NOTES
+---------------
+
+- Your API key is: AIzaSyC3k78W-m1QZNGj4XcE09CM6m9O7XFnkCo
+- This key is used for both Firebase AND Google Maps
+- Make sure Maps JavaScript API is enabled in the API restrictions
+- Billing must be enabled for Google Maps (even free tier)
+- After making changes, restart dev server and hard refresh browser
+
+TEST YOUR API KEY
+-----------------
+
+Visit this URL in your browser:
+https://maps.googleapis.com/maps/api/js?key=AIzaSyC3k78W-m1QZNGj4XcE09CM6m9O7XFnkCo&callback=initMap
+
+If you see an error page, the API key has restrictions blocking it.
+If it loads successfully, the key works but there might be a code issue.
+

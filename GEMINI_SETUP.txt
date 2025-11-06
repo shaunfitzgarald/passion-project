@@ -1,0 +1,83 @@
+SETTING UP FIREBASE AI LOGIC INTEGRATION
+=========================================
+
+To enable the AI Assistant feature that auto-fills location forms:
+
+1. ENABLE FIREBASE AI LOGIC IN YOUR PROJECT
+--------------------------------------------
+
+Since we're using Firebase AI Logic (not a direct API key), you need to:
+
+Option A: Enable in Firebase Console
+- Go to: https://console.firebase.google.com/
+- Select your Firebase project
+- Navigate to "Build" > "AI Logic" (or "AI" section)
+- Enable Firebase AI Logic for your project
+- This uses your existing Firebase project credentials
+
+Option B: Enable via Google Cloud Console
+- Go to: https://console.cloud.google.com/
+- Select your Firebase project
+- Navigate to "APIs & Services" > "Library"
+- Search for "Firebase AI Logic API" or "Generative Language API"
+- Click "Enable" if not already enabled
+
+2. NO API KEY NEEDED!
+---------------------
+
+Firebase AI Logic uses your Firebase project credentials automatically.
+You don't need to add any API keys to your .env file.
+
+3. VERIFY FIREBASE CONFIG
+--------------------------
+
+Make sure your Firebase config in src/config/firebase.js is correct.
+The AI Logic will use the same Firebase project.
+
+4. RESTART DEV SERVER (if needed)
+----------------------------------
+
+If you just enabled AI Logic:
+- Stop the server (Ctrl+C)
+- Run: npm start
+
+4. HOW TO USE AI ASSISTANT
+---------------------------
+
+In the "Add Location" form:
+1. Click "Show AI Assistant" button at the top
+2. Describe the location in natural language, for example:
+   - "Add a homeless shelter at 123 Main Street, San Diego, CA. It's open 24/7 and provides meals, beds, and showers."
+   - "Community food pantry at 456 Oak Ave, open Monday-Friday 9am-5pm, accepts SNAP benefits"
+   - "Healthcare clinic at 789 Pine St, San Diego. Open weekdays 8am-6pm, accepts Medicaid"
+
+3. Click the send button or press Enter
+4. The AI will extract all the information and fill out the form automatically
+5. Review and edit any fields as needed
+6. Submit the form
+
+The AI will intelligently:
+- Extract name, address, city, state, zip code
+- Determine appropriate categories and resources
+- Select the best icon type
+- Extract hours, phone, email, website if mentioned
+- Auto-geocode the address to get coordinates
+
+5. TROUBLESHOOTING
+-------------------
+
+If you get "API key not configured" error:
+- Make sure REACT_APP_GEMINI_API_KEY is in your .env file
+- Restart the dev server after adding the key
+- Check that the key doesn't have extra spaces
+
+If AI extraction fails:
+- Try rephrasing your request more clearly
+- Include the address in your description
+- Be specific about what type of location it is
+
+If you get rate limit errors:
+- The free tier has usage limits
+- Wait a few minutes and try again
+- Consider upgrading to a paid plan for higher limits
+
