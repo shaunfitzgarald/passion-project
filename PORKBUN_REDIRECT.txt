@@ -1,0 +1,58 @@
+SETTING UP WWW REDIRECT ON PORKBUN.COM
+========================================
+
+To redirect www.sandiegohomeless.info to sandiegohomeless.info on Porkbun:
+
+STEPS:
+------
+
+1. LOG IN TO PORKBUN
+   - Go to porkbun.com and sign in
+
+2. NAVIGATE TO DOMAIN MANAGEMENT
+   - Click on "Domain Management" or "My Domains"
+   - Find sandiegohomeless.info and click on it
+
+3. SET UP URL FORWARDING
+   - Look for "URL Forwarding" or "Subdomain Forwarding" section
+   - Click "Add" or "Edit" next to URL Forwarding
+
+4. CONFIGURE THE REDIRECT
+   - Hostname/Subdomain: Enter "www"
+   - Forward To: Enter "https://sandiegohomeless.info"
+   - Type: Select "301 Permanent Redirect" (for SEO)
+   - Wildcard: Leave unchecked (unless you want to forward all www subdomains)
+
+5. SAVE THE SETTINGS
+   - Click "Submit" or "Save"
+   - Wait a few minutes for DNS propagation
+
+ALTERNATIVE: DNS RECORD METHOD (CNAME + FIREBASE REDIRECT)
+------------------------------------------------------------
+If URL Forwarding isn't available, you can use a CNAME record combined with Firebase Hosting redirect:
+
+STEP 1: ADD CNAME RECORD IN PORKBUN
+1. Go to DNS Records
+2. Add a CNAME record:
+   - Type: CNAME
+   - Host: www
+   - Answer: sandiegohomeless.info
+   - TTL: 300 (or default, 301 is fine too)
+
+STEP 2: CONFIGURE FIREBASE HOSTING REDIRECT
+After adding the CNAME, you need to configure the redirect in firebase.json.
+The firebase.json file has been updated with the redirect rule.
+
+IMPORTANT: The CNAME record alone does NOT create a redirect. It only makes both
+www and non-www point to the same server. The actual HTTP redirect (301) is
+handled by Firebase Hosting using the redirects configuration in firebase.json.
+
+After deploying to Firebase, www.sandiegohomeless.info will automatically
+redirect to sandiegohomeless.info with a 301 permanent redirect.
+
+VERIFY
+------
+After setup, test by visiting:
+- www.sandiegohomeless.info should redirect to sandiegohomeless.info
+- The redirect should preserve the path (e.g., www.sandiegohomeless.info/about -> sandiegohomeless.info/about)
+

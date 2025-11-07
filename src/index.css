@@ -11,8 +11,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #1a1a1a;
-  color: #fff;
+  /* Background and color will be set by theme */
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 code {

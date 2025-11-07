@@ -150,7 +150,7 @@ const ICON_OPTIONS = [
 ];
 
 // Format phone number to (xxx) xxx-xxxx
-const formatPhoneNumber = (value) => {
+export const formatPhoneNumber = (value) => {
   // Remove all non-digit characters
   const phoneNumber = value.replace(/\D/g, '');
   
