@@ -25,14 +25,126 @@ import {
       Favorite,
       FavoriteBorder,
       Edit,
+      Flag,
+      Share,
+      CheckCircle,
+      Cancel,
+      DirectionsWalk,
     } from '@mui/icons-material';
 import { GOOGLE_MAPS_API_KEY, defaultMapCenter, defaultMapZoom } from '../config/googleMaps';
+import { calculateDistance, formatDistance, checkOpenStatus, shareLocation } from '../utils/locationUtils';
+import { useTheme } from '../contexts/ThemeContext';
+import PhotoGallery from './PhotoGallery';
+import ReportLocation from './ReportLocation';
+import PersonalNote from './PersonalNote';
+import NearbyResources from './NearbyResources';
+import TransitSchedule from './TransitSchedule';
+import BusStopMarker from './BusStopMarker';
+import { addToHistory } from '../services/historyService';
+import { getNearbyStops } from '../services/oneBusAwayService';
 
 const containerStyle = {
   width: '100%',
   height: '100%',
   minHeight: '400px',
 };
+
+// Dark map styles
+const darkMapStyles = [
+  {
+    featureType: 'all',
+    elementType: 'geometry',
+    stylers: [{ color: '#242f3e' }]
+  },
+  {
+    featureType: 'all',
+    elementType: 'labels.text.stroke',
+    stylers: [{ color: '#242f3e' }]
+  },
+  {
+    featureType: 'all',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#746855' }]
+  },
+  {
+    featureType: 'water',
+    elementType: 'geometry',
+    stylers: [{ color: '#17263c' }]
+  },
+  {
+    featureType: 'road',
+    elementType: 'geometry',
+    stylers: [{ color: '#38414e' }]
+  },
+  {
+    featureType: 'road',
+    elementType: 'geometry.stroke',
+    stylers: [{ color: '#212a37' }]
+  },
+  {
+    featureType: 'road',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#9ca5b3' }]
+  },
+  {
+    featureType: 'road.highway',
+    elementType: 'geometry',
+    stylers: [{ color: '#746855' }]
+  },
+  {
+    featureType: 'road.highway',
+    elementType: 'geometry.stroke',
+    stylers: [{ color: '#1f2835' }]
+  },
+  {
+    featureType: 'road.highway',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#f3d19c' }]
+  },
+  {
+    featureType: 'transit',
+    elementType: 'geometry',
+    stylers: [{ color: '#2f3948' }]
+  },
+  {
+    featureType: 'transit.station',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#d59563' }]
+  },
+  {
+    featureType: 'poi',
+    elementType: 'geometry',
+    stylers: [{ color: '#17263c' }]
+  },
+  {
+    featureType: 'poi',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#515c6d' }]
+  },
+  {
+    featureType: 'poi.park',
+    elementType: 'geometry',
+    stylers: [{ color: '#263c3f' }]
+  },
+  {
+    featureType: 'poi.park',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#6b9a76' }]
+  },
+  {
+    featureType: 'administrative',
+    elementType: 'geometry.stroke',
+    stylers: [{ color: '#4b6878' }]
+  },
+  {
+    featureType: 'administrative',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#746855' }]
+  }
+];
+
+// Light map styles (minimal styling to use Google's default light theme)
+const lightMapStyles = [];
 
 const MapView = ({ 
   center = defaultMapCenter, 
@@ -44,13 +156,20 @@ const MapView = ({
   userLocation = null,
   onUserLocationRequest = null,
   onLocationEdit = null,
+  allLocations = [],
+  onLocationClick = null,
 }) => {
+  const { isDarkMode } = useTheme();
   const mapRef = useRef(null);
   const [loadError, setLoadError] = useState(null);
   const [selectedMarker, setSelectedMarker] = useState(null);
   const [hoveredMarker, setHoveredMarker] = useState(null);
   const [userLocationMarker, setUserLocationMarker] = useState(null);
   const [showUserLocation, setShowUserLocation] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [reportingLocation, setReportingLocation] = useState(null);
+  const [nearbyBusStops, setNearbyBusStops] = useState([]);
+  const [showBusStops, setShowBusStops] = useState(false);
 
   // Icon mapping
   const getIconComponent = (iconName) => {
@@ -164,6 +283,15 @@ const MapView = ({
     mapRef.current = null;
   }, []);
 
+  // Update map styles when theme changes
+  useEffect(() => {
+    if (mapRef.current && isLoaded) {
+      mapRef.current.setOptions({
+        styles: isDarkMode ? darkMapStyles : lightMapStyles
+      });
+    }
+  }, [isDarkMode, isLoaded]);
+
   // Handle script load errors
   React.useEffect(() => {
     if (scriptLoadError) {
@@ -186,7 +314,7 @@ const MapView = ({
   };
 
   // Get directions URL (opens in Google/Apple Maps)
-  const getDirectionsUrl = (location) => {
+  const getDirectionsUrl = (location, mode = 'transit') => {
     const lat = location.latitude;
     const lng = location.longitude;
     const address = encodeURIComponent(
@@ -200,13 +328,33 @@ const MapView = ({
       // Use platform-specific URLs
       const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
       if (isIOS) {
-        return `maps://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`;
+        // iOS Maps with different modes
+        if (mode === 'transit') {
+          return `maps://maps.apple.com/?daddr=${lat},${lng}&dirflg=r`; // r = transit
+        } else if (mode === 'walking') {
+          return `maps://maps.apple.com/?daddr=${lat},${lng}&dirflg=w`; // w = walking
+        } else {
+          return `maps://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`; // d = driving
+        }
       } else {
-        return `google.navigation:q=${lat},${lng}`;
+        // Android with different modes
+        if (mode === 'transit') {
+          return `google.navigation:q=${lat},${lng}&mode=t`; // t = transit
+        } else if (mode === 'walking') {
+          return `google.navigation:q=${lat},${lng}&mode=w`; // w = walking
+        } else {
+          return `google.navigation:q=${lat},${lng}`;
+        }
       }
     } else {
-      // Desktop - open in Google Maps web
-      return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+      // Desktop - open in Google Maps web with different modes
+      if (mode === 'transit') {
+        return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=transit`;
+      } else if (mode === 'walking') {
+        return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=walking`;
+      } else {
+        return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+      }
     }
   };
 
@@ -246,8 +394,57 @@ const MapView = ({
       }
     }
     
+    // Filter by distance
+    if (filters.maxDistance && userLocation && location.latitude && location.longitude) {
+      const distance = calculateDistance(
+        userLocation.lat,
+        userLocation.lng,
+        location.latitude,
+        location.longitude
+      );
+      if (distance !== null && distance > filters.maxDistance) {
+        return false;
+      }
+    }
+    
+    // Filter by open status
+    if (filters.openStatus && filters.openStatus !== 'all' && location.hours) {
+      const openStatus = checkOpenStatus(location.hours);
+      if (filters.openStatus === 'open' && openStatus.isOpen !== true) {
+        return false;
+      }
+      if (filters.openStatus === 'closed' && openStatus.isOpen !== false) {
+        return false;
+      }
+      if (filters.openStatus === '24hours') {
+        const hoursLower = (location.hours || '').toLowerCase();
+        if (!hoursLower.includes('24') && !hoursLower.includes('24/7')) {
+          return false;
+        }
+      }
+    }
+    
     return true;
   });
+
+  // Load nearby bus stops when a location is selected and bus stops are enabled
+  const loadNearbyBusStops = async (lat, lng) => {
+    const result = await getNearbyStops(lat, lng, 500);
+    if (!result.error && result.stops) {
+      setNearbyBusStops(result.stops);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedMarker !== null && filteredMarkers[selectedMarker] && showBusStops) {
+      const location = filteredMarkers[selectedMarker].location;
+      if (location && location.latitude && location.longitude) {
+        loadNearbyBusStops(location.latitude, location.longitude);
+      }
+    } else {
+      setNearbyBusStops([]);
+    }
+  }, [selectedMarker, showBusStops, filteredMarkers.length]);
 
   // Update user location marker
   useEffect(() => {
@@ -341,13 +538,13 @@ const MapView = ({
 
   return (
     <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
-      {/* User Location Button */}
+      {/* User Location Button - Top Right */}
       {onUserLocationRequest && (
         <Box
           sx={{
             position: 'absolute',
-            top: 10,
-            right: 10,
+            top: 20,
+            right: 20,
             zIndex: 1000,
           }}
         >
@@ -384,6 +581,8 @@ const MapView = ({
                 color: '#fff',
                 '&:hover': { bgcolor: '#2a2a2a' },
                 boxShadow: 2,
+                width: 48,
+                height: 48,
               }}
             >
               <MyLocation />
@@ -404,98 +603,7 @@ const MapView = ({
           streetViewControl: false,
           mapTypeControl: true,
           fullscreenControl: true,
-          styles: [
-            {
-              featureType: 'all',
-              elementType: 'geometry',
-              stylers: [{ color: '#242f3e' }]
-            },
-            {
-              featureType: 'all',
-              elementType: 'labels.text.stroke',
-              stylers: [{ color: '#242f3e' }]
-            },
-            {
-              featureType: 'all',
-              elementType: 'labels.text.fill',
-              stylers: [{ color: '#746855' }]
-            },
-            {
-              featureType: 'water',
-              elementType: 'geometry',
-              stylers: [{ color: '#17263c' }]
-            },
-            {
-              featureType: 'road',
-              elementType: 'geometry',
-              stylers: [{ color: '#38414e' }]
-            },
-            {
-              featureType: 'road',
-              elementType: 'geometry.stroke',
-              stylers: [{ color: '#212a37' }]
-            },
-            {
-              featureType: 'road',
-              elementType: 'labels.text.fill',
-              stylers: [{ color: '#9ca5b3' }]
-            },
-            {
-              featureType: 'road.highway',
-              elementType: 'geometry',
-              stylers: [{ color: '#746855' }]
-            },
-            {
-              featureType: 'road.highway',
-              elementType: 'geometry.stroke',
-              stylers: [{ color: '#1f2835' }]
-            },
-            {
-              featureType: 'road.highway',
-              elementType: 'labels.text.fill',
-              stylers: [{ color: '#f3d19c' }]
-            },
-            {
-              featureType: 'transit',
-              elementType: 'geometry',
-              stylers: [{ color: '#2f3948' }]
-            },
-            {
-              featureType: 'transit.station',
-              elementType: 'labels.text.fill',
-              stylers: [{ color: '#d59563' }]
-            },
-            {
-              featureType: 'poi',
-              elementType: 'geometry',
-              stylers: [{ color: '#17263c' }]
-            },
-            {
-              featureType: 'poi',
-              elementType: 'labels.text.fill',
-              stylers: [{ color: '#515c6d' }]
-            },
-            {
-              featureType: 'poi.park',
-              elementType: 'geometry',
-              stylers: [{ color: '#263c3f' }]
-            },
-            {
-              featureType: 'poi.park',
-              elementType: 'labels.text.fill',
-              stylers: [{ color: '#6b9a76' }]
-            },
-            {
-              featureType: 'administrative',
-              elementType: 'geometry.stroke',
-              stylers: [{ color: '#4b6878' }]
-            },
-            {
-              featureType: 'administrative',
-              elementType: 'labels.text.fill',
-              stylers: [{ color: '#746855' }]
-            }
-          ]
+          styles: isDarkMode ? darkMapStyles : lightMapStyles
         }}
       >
         {/* User Location Marker */}
@@ -534,15 +642,14 @@ const MapView = ({
                   const isFavorited = favorites.includes(locationId);
                   
                   // Calculate distance if user location is available
-                  let distance = null;
-                  if (userLocation && location.latitude && location.longitude) {
-                    distance = calculateDistance(
-                      userLocation.lat,
-                      userLocation.lng,
-                      location.latitude,
-                      location.longitude
-                    );
-                  }
+                  const distance = userLocation && location.latitude && location.longitude
+                    ? calculateDistance(
+                        userLocation.lat,
+                        userLocation.lng,
+                        location.latitude,
+                        location.longitude
+                      )
+                    : null;
                   
                   return (
                     <React.Fragment key={index}>
@@ -550,7 +657,17 @@ const MapView = ({
                         position={marker.position}
                         title={marker.title}
                         icon={createCustomIcon(iconName, isSelected, isHovered)}
-                        onClick={() => setSelectedMarker(isSelected ? null : index)}
+                        onClick={() => {
+                          setSelectedMarker(isSelected ? null : index);
+                          // Add to history when marker is clicked
+                          if (location && location.id) {
+                            addToHistory(location);
+                          }
+                          // Call onLocationClick if provided
+                          if (onLocationClick && location) {
+                            onLocationClick(location);
+                          }
+                        }}
                         onMouseOver={() => setHoveredMarker(index)}
                         onMouseOut={() => setHoveredMarker(null)}
                         clusterer={clusterer}
@@ -644,6 +761,49 @@ const MapView = ({
                         </Box>
                       )}
                     </Box>
+
+                    {/* Open Status & Distance */}
+                    <Box sx={{ mt: 1.5, pt: 1.5, borderTop: '1px solid #444', display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      {location.hours && (() => {
+                        const openStatus = checkOpenStatus(location.hours);
+                        return (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            {openStatus.isOpen === true ? (
+                              <>
+                                <CheckCircle sx={{ fontSize: 14, color: '#4caf50' }} />
+                                <Typography variant="body2" sx={{ color: '#4caf50', fontSize: '0.875rem', fontWeight: 600 }}>
+                                  {openStatus.status}
+                                </Typography>
+                              </>
+                            ) : openStatus.isOpen === false ? (
+                              <>
+                                <Cancel sx={{ fontSize: 14, color: '#f44336' }} />
+                                <Typography variant="body2" sx={{ color: '#f44336', fontSize: '0.875rem' }}>
+                                  {openStatus.status}
+                                </Typography>
+                              </>
+                            ) : null}
+                          </Box>
+                        );
+                      })()}
+                      
+                      {userLocation && location.latitude && location.longitude && (() => {
+                        const distance = calculateDistance(
+                          userLocation.lat,
+                          userLocation.lng,
+                          location.latitude,
+                          location.longitude
+                        );
+                        return distance !== null ? (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <LocationOn sx={{ fontSize: 14, color: '#999' }} />
+                            <Typography variant="body2" sx={{ color: '#ccc', fontSize: '0.875rem' }}>
+                              {formatDistance(distance)} away
+                            </Typography>
+                          </Box>
+                        ) : null;
+                      })()}
+                    </Box>
                     
                     {location.resources && location.resources.length > 0 && (
                       <Box sx={{ mt: 1.5, pt: 1.5, borderTop: '1px solid #444' }}>
@@ -672,74 +832,103 @@ const MapView = ({
                     
                     {/* Photos */}
                     {location.photos && location.photos.length > 0 && (
-                      <Box sx={{ mt: 1.5, pt: 1.5, borderTop: '1px solid #444' }}>
-                        <Typography variant="caption" sx={{ color: '#999', display: 'block', mb: 0.5 }}>
-                          Photos:
-                        </Typography>
-                        <Box sx={{ display: 'flex', gap: 0.5, overflowX: 'auto', pb: 0.5 }}>
-                          {location.photos.slice(0, 3).map((photoUrl, idx) => (
-                            <Box
-                              key={idx}
-                              component="img"
-                              src={photoUrl}
-                              alt={`Location photo ${idx + 1}`}
-                              sx={{
-                                width: 80,
-                                height: 80,
-                                objectFit: 'cover',
-                                borderRadius: 1,
-                                cursor: 'pointer',
-                                '&:hover': { opacity: 0.8 },
-                              }}
-                              onClick={() => window.open(photoUrl, '_blank')}
-                            />
-                          ))}
-                          {location.photos.length > 3 && (
-                            <Box
-                              sx={{
-                                width: 80,
-                                height: 80,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                bgcolor: '#3a3a3a',
-                                borderRadius: 1,
-                                color: '#fff',
-                                fontSize: '0.75rem',
-                              }}
-                            >
-                              +{location.photos.length - 3}
-                            </Box>
-                          )}
-                        </Box>
-                      </Box>
+                      <PhotoGallery photos={location.photos} locationName={location.name} />
                     )}
+
+                    {/* Transit Schedule */}
+                    <TransitSchedule 
+                      location={location}
+                      onToggleBusStops={(show) => setShowBusStops(show)}
+                      showBusStops={showBusStops}
+                    />
+                    
+                    {/* Personal Note */}
+                    <PersonalNote locationId={locationId} locationName={location.name} />
                     
                     {/* Distance and Actions */}
                     <Box sx={{ mt: 1.5, pt: 1.5, borderTop: '1px solid #444', display: 'flex', flexDirection: 'column', gap: 1 }}>
                       {distance !== null && (
-                        <Typography variant="body2" sx={{ color: '#90caf9', fontWeight: 500 }}>
-                          📍 {distance.toFixed(1)} miles away
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <LocationOn sx={{ fontSize: 14, color: '#999' }} />
+                          <Typography variant="body2" sx={{ color: '#90caf9', fontWeight: 500 }}>
+                            {formatDistance(distance)} away
+                          </Typography>
+                        </Box>
                       )}
                       
-                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
                         <Button
                           variant="contained"
                           size="small"
-                          startIcon={<Directions />}
+                          startIcon={<DirectionsBus />}
                           onClick={() => {
-                            const url = getDirectionsUrl(location);
+                            const url = getDirectionsUrl(location, 'transit');
                             window.open(url, '_blank');
                           }}
                           sx={{ 
-                            bgcolor: '#1976d2',
-                            '&:hover': { bgcolor: '#1565c0' },
+                            bgcolor: '#3F51B5',
+                            '&:hover': { bgcolor: '#303f9f' },
                             flex: 1,
-                            minWidth: '120px',
+                            minWidth: '100px',
+                          }}
+                          title="Get transit directions (bus/train) - Recommended"
+                        >
+                          Transit
+                        </Button>
+                        {distance !== null && distance < 1 && (
+                          <Button
+                            variant="contained"
+                            size="small"
+                            startIcon={<DirectionsWalk />}
+                            onClick={() => {
+                              const url = getDirectionsUrl(location, 'walking');
+                              window.open(url, '_blank');
+                            }}
+                            sx={{ 
+                              bgcolor: '#4CAF50',
+                              '&:hover': { bgcolor: '#388e3c' },
+                              flex: 1,
+                              minWidth: '80px',
+                            }}
+                            title="Get walking directions"
+                          >
+                            Walk
+                          </Button>
+                        )}
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          startIcon={<Directions />}
+                          onClick={() => {
+                            const url = getDirectionsUrl(location, 'driving');
+                            window.open(url, '_blank');
+                          }}
+                          sx={{ 
+                            borderColor: '#555',
+                            color: '#fff',
+                            fontSize: '0.75rem',
+                            '&:hover': { borderColor: '#777', bgcolor: 'rgba(255,255,255,0.05)' },
+                          }}
+                          title="Get driving directions"
+                        >
+                          Drive
+                        </Button>
+                        
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          startIcon={<Share />}
+                          onClick={async () => {
+                            await shareLocation(location);
+                          }}
+                          sx={{ 
+                            borderColor: '#555',
+                            color: '#fff',
+                            fontSize: '0.75rem',
+                            '&:hover': { borderColor: '#777', bgcolor: 'rgba(255,255,255,0.05)' },
                           }}
                         >
-                          Directions
+                          Share
                         </Button>
                         
                         {onLocationEdit && (
@@ -770,6 +959,22 @@ const MapView = ({
                             {isFavorited ? <Favorite /> : <FavoriteBorder />}
                           </IconButton>
                         )}
+
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            setReportingLocation(location);
+                            setReportDialogOpen(true);
+                          }}
+                          sx={{ 
+                            color: '#ff9800',
+                            border: '1px solid #555',
+                            '&:hover': { bgcolor: 'rgba(255, 152, 0, 0.1)' },
+                          }}
+                          title="Report incorrect information"
+                        >
+                          <Flag />
+                        </IconButton>
                       </Box>
                     </Box>
                   </Paper>
@@ -782,7 +987,42 @@ const MapView = ({
       )}
     </MarkerClusterer>
         )}
+
+        {/* Bus Stop Markers */}
+        {showBusStops && nearbyBusStops.map((stop) => (
+          <BusStopMarker key={stop.id || stop.code || `stop-${stop.lat}-${stop.lng}`} stop={stop} map={mapRef.current} />
+        ))}
       </GoogleMap>
+
+      {/* Report Location Dialog */}
+      {reportingLocation && (
+        <ReportLocation
+          location={reportingLocation}
+          open={reportDialogOpen}
+          onClose={() => {
+            setReportDialogOpen(false);
+            setReportingLocation(null);
+          }}
+        />
+      )}
+
+      {/* Nearby Resources Panel */}
+      {selectedMarker !== null && filteredMarkers[selectedMarker] && (
+        <NearbyResources
+          currentLocation={filteredMarkers[selectedMarker].location}
+          allLocations={allLocations.length > 0 ? allLocations : markers.map(m => m.location)}
+          onLocationClick={(loc) => {
+            // Find marker index and select it
+            const markerIndex = markers.findIndex(m => m.location?.id === loc.id);
+            if (markerIndex !== -1) {
+              setSelectedMarker(markerIndex);
+              if (onLocationClick) {
+                onLocationClick(loc);
+              }
+            }
+          }}
+        />
+      )}
     </Box>
   );
 };

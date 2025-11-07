@@ -35,7 +35,6 @@ export const extractLocationFromText = async (userQuery) => {
     }
     
     Rules:
-    - Only include fields that are explicitly mentioned or can be reasonably inferred
     - For categories, resources, and benefits, infer from context (e.g., "shelter" -> category: "Housing", icon: "hotel", resource: "Emergency Shelter")
     - For icon, choose the most appropriate based on the location type
     - If address is incomplete, try to infer city/state from context

@@ -19,11 +19,12 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
-import { Check, Close, AdminPanelSettings, List } from '@mui/icons-material';
+import { Check, Close, AdminPanelSettings, List, CloudUpload } from '@mui/icons-material';
 import { getPendingLocations, approveLocation, rejectLocation } from '../services/locationService';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import AdminUsers from './AdminUsers';
+import BatchImport from '../components/BatchImport';
 
 const AdminDashboard = ({ onLocationApproved }) => {
   const { isAdmin } = useAuth();
@@ -108,6 +109,12 @@ const AdminDashboard = ({ onLocationApproved }) => {
         <Tab
           icon={<List />}
           label={`Pending Locations (${pendingLocations.length})`}
+          iconPosition="start"
+          sx={{ color: '#fff' }}
+        />
+        <Tab
+          icon={<CloudUpload />}
+          label="Batch Import"
           iconPosition="start"
           sx={{ color: '#fff' }}
         />
@@ -292,7 +299,16 @@ const AdminDashboard = ({ onLocationApproved }) => {
         </>
       )}
 
-      {tabValue === 1 && <AdminUsers />}
+      {tabValue === 1 && (
+        <BatchImport
+          onImportComplete={() => {
+            if (onLocationApproved) {
+              onLocationApproved();
+            }
+          }}
+        />
+      )}
+      {tabValue === 2 && <AdminUsers />}
     </Box>
   );
 };
