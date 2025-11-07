@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Box, AppBar, Tabs, Tab, Fab, IconButton, Menu, MenuItem, ListItemIcon, ListItemText, Divider, Typography, Badge, Button } from '@mui/material';
-import { Map, List, Add, Settings as SettingsIcon, AdminPanelSettings, Person, Logout, MoreVert, ArrowBack } from '@mui/icons-material';
+import { Map, List, Add, Settings as SettingsIcon, AdminPanelSettings, Person, Logout, MoreVert, ArrowBack, Favorite, CompareArrows, History as HistoryIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import MapView from '../components/MapView';
 import MapFilters from '../components/MapFilters';
 import Locations from '../pages/Locations';
+import Favorites from '../pages/Favorites';
+import LocationHistory from '../pages/LocationHistory';
 import AddLocationDialog from '../components/AddLocationDialog';
 import AdminDashboard from '../pages/AdminDashboard';
+import EmergencyResources from '../components/EmergencyResources';
+import LocationComparison from '../components/LocationComparison';
 import { getLocations } from '../services/locationService';
 import { getFavorites, addFavorite, removeFavorite } from '../services/favoritesService';
 import { defaultMapCenter, defaultMapZoom } from '../config/googleMaps';
@@ -31,9 +35,12 @@ const MapViewPage = ({ children }) => {
     iconTypes: [],
     searchTerm: '',
     favoritesOnly: false,
+    maxDistance: 50,
+    openStatus: 'all',
   });
   const [favorites, setFavorites] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
+  const [comparisonDialogOpen, setComparisonDialogOpen] = useState(false);
 
   // Check if we're on profile or settings page
   const isProfilePage = location.pathname === '/profile';
@@ -42,14 +49,21 @@ const MapViewPage = ({ children }) => {
 
   useEffect(() => {
     loadLocations();
-    // Set tab value based on current route
-    if (location.pathname === '/admin') {
-      setTabValue(2);
-    } else if (location.pathname === '/') {
-      // Reset to map tab if not logged in
-      if (!user) {
-        setTabValue(0);
-      }
+  }, []);
+
+  // Set tab value based on current route
+  useEffect(() => {
+    if (location.pathname === '/') {
+      setTabValue(0); // Map
+    } else if (location.pathname === '/locations') {
+      setTabValue(1); // Locations
+    } else if (location.pathname === '/favorites') {
+      setTabValue(2); // Favorites
+    } else if (location.pathname === '/history') {
+      setTabValue(3); // History
+    } else if (location.pathname === '/admin') {
+      // Admin tab index depends on whether user is logged in
+      setTabValue(user ? 4 : 1); // Admin
     }
   }, [location.pathname, user]);
 
@@ -127,20 +141,9 @@ const MapViewPage = ({ children }) => {
     }));
 
   const handleTabChange = (event, newValue) => {
-    // If user tries to access Locations tab without being logged in, redirect to login
-    if (newValue === 1 && !user) {
-      navigate('/auth/login');
-      return;
-    }
-    
-    setTabValue(newValue);
-    if (newValue === 2 && isAdmin) {
-      navigate('/admin');
-    } else if (newValue === 0) {
-      navigate('/');
-    } else if (newValue === 1) {
-      navigate('/');
-    }
+    // This is called by MUI Tabs onChange, but we're also handling clicks directly
+    // Keep this for the visual tab selection, but navigation is handled by onClick
+    console.log('Tabs onChange event:', newValue);
   };
 
   const handleAddSuccess = () => {
@@ -213,21 +216,61 @@ const MapViewPage = ({ children }) => {
                 },
               }}
             >
-            <Tab icon={<Map />} label="Map" iconPosition="start" />
-            {user && (
-              <Tab icon={<List />} label="Locations" iconPosition="start" />
-            )}
-            {isAdmin && (
-              <Tab
-                icon={
-                  <Badge badgeContent={pendingCount} color="error" max={99}>
-                    <AdminPanelSettings />
-                  </Badge>
-                }
-                label="Admin"
-                iconPosition="start"
-              />
-            )}
+                <Tab 
+                  icon={<Map />} 
+                  label="Map" 
+                  iconPosition="start"
+                  onClick={() => {
+                    console.log('Map tab clicked - navigating to /');
+                    navigate('/');
+                  }}
+                />
+                {user && (
+                  <>
+                    <Tab 
+                      icon={<List />} 
+                      label="Locations" 
+                      iconPosition="start"
+                      onClick={() => {
+                        console.log('Locations tab clicked - navigating to /locations');
+                        navigate('/locations');
+                      }}
+                    />
+                    <Tab 
+                      icon={<Favorite />} 
+                      label="Favorites" 
+                      iconPosition="start"
+                      onClick={() => {
+                        console.log('Favorites tab clicked - navigating to /favorites');
+                        navigate('/favorites');
+                      }}
+                    />
+                    <Tab 
+                      icon={<HistoryIcon />} 
+                      label="History" 
+                      iconPosition="start"
+                      onClick={() => {
+                        console.log('History tab clicked - navigating to /history');
+                        navigate('/history');
+                      }}
+                    />
+                  </>
+                )}
+                {isAdmin && (
+                  <Tab
+                    icon={
+                      <Badge badgeContent={pendingCount} color="error" max={99}>
+                        <AdminPanelSettings />
+                      </Badge>
+                    }
+                    label="Admin"
+                    iconPosition="start"
+                    onClick={() => {
+                      console.log('Admin tab clicked - navigating to /admin');
+                      navigate('/admin');
+                    }}
+                  />
+                )}
             </Tabs>
           )}
           {children && (
@@ -375,18 +418,46 @@ const MapViewPage = ({ children }) => {
                   filters={filters}
                   onFiltersChange={setFilters}
                   showFavorites={!!user}
+                  userLocation={userLocation}
                 />
-                    <MapView
-                      center={mapCenter}
-                      zoom={mapZoom}
-                      markers={markers}
-                      filters={filters}
-                      favorites={favorites}
-                      onFavoriteToggle={handleFavoriteToggle}
-                      userLocation={userLocation}
-                      onUserLocationRequest={handleUserLocationRequest}
-                      onLocationEdit={isAdmin ? handleEditLocation : null}
-                    />
+                <EmergencyResources />
+                <MapView
+                  center={mapCenter}
+                  zoom={mapZoom}
+                  markers={markers}
+                  filters={filters}
+                  favorites={favorites}
+                  onFavoriteToggle={handleFavoriteToggle}
+                  userLocation={userLocation}
+                  onUserLocationRequest={handleUserLocationRequest}
+                  onLocationEdit={isAdmin ? handleEditLocation : null}
+                  allLocations={locations}
+                  onLocationClick={(location) => {
+                    // Center map on clicked location
+                    if (location.latitude && location.longitude) {
+                      setMapCenter({ lat: location.latitude, lng: location.longitude });
+                      setMapZoom(15);
+                    }
+                  }}
+                />
+                {/* Floating Action Button for Comparison - Bottom Right */}
+                {user && (
+                  <Box sx={{ position: 'absolute', bottom: 20, right: 20, zIndex: 1000 }}>
+                    <Fab
+                      color="secondary"
+                      aria-label="compare locations"
+                      onClick={() => setComparisonDialogOpen(true)}
+                      sx={{ 
+                        bgcolor: '#9c27b0', 
+                        '&:hover': { bgcolor: '#7b1fa2' },
+                        width: 48,
+                        height: 48,
+                      }}
+                    >
+                      <CompareArrows />
+                    </Fab>
+                  </Box>
+                )}
               </Box>
             )}
                 {tabValue === 1 && user && (
@@ -398,14 +469,42 @@ const MapViewPage = ({ children }) => {
                         setTabValue(0);
                       }}
                       onLocationEdit={handleEditLocation}
+                      userLocation={userLocation}
                     />
                   </Box>
                 )}
-            {tabValue === 2 && isAdmin && (
-              <Box sx={{ height: '100%', overflow: 'auto', bgcolor: '#1a1a1a', color: '#fff' }}>
-                <AdminDashboard onLocationApproved={loadLocations} />
-              </Box>
-            )}
+                {tabValue === 2 && user && (
+                  <Box sx={{ height: '100%', overflow: 'auto', bgcolor: '#1a1a1a', color: '#fff' }}>
+                    <Favorites
+                      onLocationClick={(location) => {
+                        if (location.latitude && location.longitude) {
+                          setMapCenter({ lat: location.latitude, lng: location.longitude });
+                          setMapZoom(15);
+                          setTabValue(0);
+                        }
+                      }}
+                      onFavoriteToggle={handleFavoriteToggle}
+                    />
+                  </Box>
+                )}
+                {tabValue === 3 && user && (
+                  <Box sx={{ height: '100%', overflow: 'auto', bgcolor: '#1a1a1a', color: '#fff' }}>
+                    <LocationHistory
+                      onLocationClick={(location) => {
+                        if (location.latitude && location.longitude) {
+                          setMapCenter({ lat: location.latitude, lng: location.longitude });
+                          setMapZoom(15);
+                          setTabValue(0);
+                        }
+                      }}
+                    />
+                  </Box>
+                )}
+                {((user && tabValue === 4) || (!user && tabValue === 1)) && isAdmin && (
+                  <Box sx={{ height: '100%', overflow: 'auto', bgcolor: '#1a1a1a', color: '#fff' }}>
+                    <AdminDashboard onLocationApproved={loadLocations} />
+                  </Box>
+                )}
           </>
         )}
       </Box>
@@ -445,16 +544,24 @@ const MapViewPage = ({ children }) => {
         </AppBar>
       )}
 
-          {/* Add/Edit Location Dialog */}
-          <AddLocationDialog
-            open={openAddDialog}
-            onClose={() => {
-              setOpenAddDialog(false);
-              setEditingLocation(null);
-            }}
-            onSuccess={handleAddSuccess}
-            location={editingLocation}
-          />
+      {/* Add/Edit Location Dialog */}
+      <AddLocationDialog
+        open={openAddDialog}
+        onClose={() => {
+          setOpenAddDialog(false);
+          setEditingLocation(null);
+        }}
+        onSuccess={handleAddSuccess}
+        location={editingLocation}
+      />
+
+      {/* Location Comparison Dialog */}
+      <LocationComparison
+        locations={locations}
+        open={comparisonDialogOpen}
+        onClose={() => setComparisonDialogOpen(false)}
+        userLocation={userLocation}
+      />
     </Box>
   );
 };

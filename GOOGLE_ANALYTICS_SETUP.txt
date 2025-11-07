@@ -1,0 +1,77 @@
+SETTING UP GOOGLE ANALYTICS
+============================
+
+STEP 1: CREATE A GOOGLE ANALYTICS ACCOUNT
+-----------------------------------------
+1. Go to https://analytics.google.com/
+2. Sign in with your Google account
+3. Click "Start measuring" or "Admin" > "Create Account"
+4. Enter account name: "San Diego Homeless Resources"
+5. Configure account settings and click "Next"
+
+STEP 2: CREATE A PROPERTY
+--------------------------
+1. Enter property name: "San Diego Homeless Resources Website"
+2. Select time zone: "Pacific Time (US & Canada)"
+3. Select currency: "United States Dollar"
+4. Click "Next"
+
+STEP 3: CONFIGURE BUSINESS INFORMATION
+---------------------------------------
+1. Select industry: "Non-profit" or "Government"
+2. Select business size: Choose appropriate size
+3. Select business objectives: "Get baseline reports"
+4. Click "Create"
+
+STEP 4: GET YOUR MEASUREMENT ID
+--------------------------------
+1. After creating the property, you'll see "Data Streams"
+2. Click "Add stream" > "Web"
+3. Enter website URL: https://sandiegohomeless.info
+4. Enter stream name: "San Diego Homeless Resources"
+5. Click "Create stream"
+6. Copy the "Measurement ID" (format: G-XXXXXXXXXX)
+
+STEP 5: ADD MEASUREMENT ID TO YOUR PROJECT
+-------------------------------------------
+1. Create a .env file in your project root (if it doesn't exist)
+   Note: .env files are gitignored for security
+
+2. Add this line to your .env file:
+   REACT_APP_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+   (Replace G-XXXXXXXXXX with your actual Measurement ID)
+
+   Example .env file contents:
+   REACT_APP_GA_MEASUREMENT_ID=G-ABC123XYZ
+
+3. Restart your development server:
+   npm start
+
+4. For production deployment (Firebase Hosting):
+   - Add the environment variable in Firebase Console
+   - Or use firebase functions:config:set
+   - Or add it to your build process
+
+STEP 6: VERIFY IT'S WORKING
+----------------------------
+1. Visit your website
+2. Accept analytics cookies in the cookie consent banner
+3. Go to Google Analytics > Reports > Realtime
+4. You should see your visit appear in real-time
+
+IMPORTANT NOTES:
+----------------
+- Analytics will only track users who accept analytics cookies
+- The cookie consent modal must be shown and accepted
+- Make sure to test in an incognito/private window to see the consent modal
+- Analytics data may take 24-48 hours to appear in standard reports
+- Real-time reports show data immediately
+
+TROUBLESHOOTING:
+----------------
+- If analytics isn't working, check the browser console for errors
+- Make sure REACT_APP_GA_MEASUREMENT_ID is set correctly in .env
+- Verify the measurement ID format is correct (G-XXXXXXXXXX)
+- Check that cookies are being accepted (check localStorage for 'cookieConsent')
+- Make sure you've restarted the dev server after adding the .env variable
+

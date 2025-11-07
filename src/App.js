@@ -1,7 +1,6 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, CssBaseline } from '@mui/material';
-import theme from './config/theme';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import Layout from './components/Layout';
@@ -14,18 +13,62 @@ import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import VerifyEmail from './pages/VerifyEmail';
 import ForgotPassword from './pages/ForgotPassword';
+import CookieConsent from './components/CookieConsent';
+import { initGA, trackPageView } from './utils/analytics';
+
+// Component to track page views
+const PageTracker = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    // Initialize GA on mount
+    if (process.env.REACT_APP_GA_MEASUREMENT_ID) {
+      initGA(process.env.REACT_APP_GA_MEASUREMENT_ID);
+    }
+
+    // Track page view on route change
+    trackPageView(location.pathname + location.search);
+  }, [location]);
+
+  return null;
+};
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <ThemeProvider>
       <Router>
+        <PageTracker />
         <AuthProvider>
           <NotificationProvider>
+            <CookieConsent />
             <Routes>
             <Route
               path="/"
               element={<MapViewPage />}
+            />
+            <Route
+              path="/locations"
+              element={
+                <ProtectedRoute>
+                  <MapViewPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/favorites"
+              element={
+                <ProtectedRoute>
+                  <MapViewPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/history"
+              element={
+                <ProtectedRoute>
+                  <MapViewPage />
+                </ProtectedRoute>
+              }
             />
             <Route
               path="/profile"
@@ -62,7 +105,7 @@ function App() {
               }
             />
             <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+            </Routes>
           </NotificationProvider>
         </AuthProvider>
       </Router>

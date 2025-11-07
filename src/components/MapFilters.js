@@ -10,6 +10,11 @@ import {
   FormControlLabel,
   Checkbox,
   Button,
+  Slider,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl as MuiFormControl,
 } from '@mui/material';
 import {
   FilterList,
@@ -17,8 +22,7 @@ import {
   ExpandMore,
   ExpandLess,
   Favorite,
-} from '@mui/icons-material';
-import {
+  LocationOn,
   Home,
   LocalHospital,
   Restaurant,
@@ -32,7 +36,6 @@ import {
   RestaurantMenu,
   Hotel,
   Help,
-  LocationOn,
 } from '@mui/icons-material';
 
 const ICON_OPTIONS = [
@@ -52,9 +55,11 @@ const ICON_OPTIONS = [
   { value: 'location_on', label: 'Default', icon: LocationOn, color: '#1976d2' },
 ];
 
-const MapFilters = ({ filters, onFiltersChange, showFavorites = false }) => {
+const MapFilters = ({ filters, onFiltersChange, showFavorites = false, userLocation = null }) => {
   const [expanded, setExpanded] = useState(false);
   const [searchTerm, setSearchTerm] = useState(filters.searchTerm || '');
+  const [maxDistance, setMaxDistance] = useState(filters.maxDistance || 50);
+  const [openStatusFilter, setOpenStatusFilter] = useState(filters.openStatus || 'all');
 
   const handleIconToggle = (iconType) => {
     const currentTypes = filters.iconTypes || [];
@@ -83,18 +88,40 @@ const MapFilters = ({ filters, onFiltersChange, showFavorites = false }) => {
     });
   };
 
+  const handleDistanceChange = (value) => {
+    setMaxDistance(value);
+    onFiltersChange({
+      ...filters,
+      maxDistance: value,
+    });
+  };
+
+  const handleOpenStatusChange = (value) => {
+    setOpenStatusFilter(value);
+    onFiltersChange({
+      ...filters,
+      openStatus: value,
+    });
+  };
+
   const clearFilters = () => {
     setSearchTerm('');
+    setMaxDistance(50);
+    setOpenStatusFilter('all');
     onFiltersChange({
       iconTypes: [],
       searchTerm: '',
       favoritesOnly: false,
+      maxDistance: 50,
+      openStatus: 'all',
     });
   };
 
   const activeFilterCount = (filters.iconTypes?.length || 0) + 
     (filters.searchTerm ? 1 : 0) + 
-    (filters.favoritesOnly ? 1 : 0);
+    (filters.favoritesOnly ? 1 : 0) +
+    (filters.maxDistance && filters.maxDistance < 50 ? 1 : 0) +
+    (filters.openStatus && filters.openStatus !== 'all' ? 1 : 0);
 
   return (
     <Paper
@@ -202,6 +229,49 @@ const MapFilters = ({ filters, onFiltersChange, showFavorites = false }) => {
               }
               sx={{ mb: 2 }}
             />
+          )}
+
+          {/* Distance Filter */}
+          {userLocation && (
+            <Box sx={{ mb: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
+                <LocationOn sx={{ fontSize: 18, color: '#1976d2' }} />
+                <Typography variant="body2" sx={{ color: '#fff' }}>
+                  Max Distance: {maxDistance} miles
+                </Typography>
+              </Box>
+              <Slider
+                value={maxDistance}
+                onChange={(e, newValue) => handleDistanceChange(newValue)}
+                min={1}
+                max={50}
+                step={1}
+                valueLabelDisplay="auto"
+                sx={{
+                  '& .MuiSlider-thumb': {
+                    color: '#1976d2',
+                  },
+                  '& .MuiSlider-track': {
+                    color: '#1976d2',
+                  },
+                  '& .MuiSlider-rail': {
+                    color: '#444',
+                  },
+                  '& .MuiSlider-valueLabel': {
+                    backgroundColor: '#1976d2',
+                    color: '#fff',
+                  },
+                }}
+              />
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
+                <Typography variant="caption" sx={{ color: '#999' }}>
+                  1 mi
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#999' }}>
+                  50 mi
+                </Typography>
+              </Box>
+            </Box>
           )}
 
           {/* Icon Type Filters */}

@@ -1,0 +1,64 @@
+San Diego MTS OneBusAway API Setup Instructions
+================================================
+
+San Diego Metropolitan Transit System (MTS) provides real-time transit data through the OneBusAway API.
+
+API ENDPOINT:
+-------------
+https://realtime.sdmts.com/api/api/where/
+
+DOCUMENTATION:
+--------------
+https://www.sdmts.com/business-center/app-developers/real-time-data
+
+GETTING AN API KEY:
+-------------------
+1. Visit: https://www.sdmts.com/business-center/app-developers/real-time-data
+2. Fill out the "Real Time API Request" form at the bottom of the page
+3. You'll need to provide:
+   - Your name
+   - Company/App Name (if applicable)
+   - Email address
+   - Project type (Commercial/Public Use App or Personal Use/School Project)
+4. MTS will provide you with an API key via email
+
+CONFIGURING THE APPLICATION:
+----------------------------
+1. Add the API key to your .env file:
+   
+   REACT_APP_ONEBUSAWAY_API_KEY=your_api_key_here
+   REACT_APP_ONEBUSAWAY_BASE_URL=https://realtime.sdmts.com/api/api/where
+
+2. The base URL is already configured correctly in the code, so you only need to add the API key.
+
+NOTE ABOUT API KEYS:
+--------------------
+- API keys are used to track usage statistics
+- All API requests should include the key parameter
+- The application will work without a key for testing, but you should get one for production use
+
+AVAILABLE FEATURES:
+-------------------
+Once configured, the application will:
+- Show nearby bus stops when viewing a location
+- Display bus stops on the map (toggleable)
+- Show real-time arrival information when clicking on bus stops
+- Display routes that serve each stop
+- Provide bus route information near locations
+
+GTFS REALTIME FEEDS:
+--------------------
+MTS also provides GTFS Realtime feeds:
+- Trip Updates: https://realtime.sdmts.com/api/api/gtfs_realtime/trip-updates-for-agency/MTS.pb?key=YOURKEY
+- Vehicle Positions: https://realtime.sdmts.com/api/api/gtfs_realtime/vehicle-positions-for-agency/MTS.pb?key=YOURKEY
+- Alerts: http://app.mecatran.com/utw/ws/gtfsfeed/alerts/sdmts?apiKey=78161d20210d221e242d3f62056b1e764469525a
+
+These are not currently integrated but could be added for more advanced features.
+
+TROUBLESHOOTING:
+----------------
+- If you see "API key not configured" warnings, add the key to your .env file
+- If API calls fail, check that the endpoint is accessible: https://realtime.sdmts.com/api/api/where/
+- The API may require CORS to be enabled on their server
+- If you get 401 errors, your API key may be invalid or expired
+
