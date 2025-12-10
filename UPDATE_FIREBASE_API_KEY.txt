@@ -1,0 +1,123 @@
+# How to Update API Key in Firebase Project Settings
+
+Firebase AI Logic uses the API key from your **Firebase project settings**, not just your `.env` file. Here's how to update it:
+
+## Method 1: Update Firebase Web App Config (Recommended)
+
+1. **Go to Firebase Console:**
+   - https://console.firebase.google.com/project/passion-project-2eb1c/settings/general
+
+2. **Scroll down to "Your apps" section**
+
+3. **Find your web app** (the one with the `</>` icon)
+
+4. **Click the gear icon** (⚙️) next to it, or click on the app name
+
+5. **Click "Add Firebase to your web app"** or **"Config"** button
+
+6. **You'll see your Firebase config** - the `apiKey` field should show your current API key
+
+7. **To update it:**
+   - The API key in Firebase project settings is usually the "Browser key (auto created by Firebase)"
+   - You need to update this in Google Cloud Console (see Method 2)
+
+## Method 2: Update the Browser Key in Google Cloud Console
+
+The Firebase project uses a "Browser key" that's auto-created. Here's how to update it:
+
+### Option A: Update the Existing Browser Key
+
+1. **Go to Google Cloud Console:**
+   - https://console.cloud.google.com/apis/credentials?project=passion-project-2eb1c
+
+2. **Find "Browser key (auto created by Firebase)"**
+   - This is the key that Firebase project settings uses
+
+3. **Click on it**
+
+4. **Update the API restrictions:**
+   - Make sure **"Generative Language API"** is checked
+   - Add all other required APIs (Maps, Geocoding, Places, etc.)
+
+5. **Click "SAVE"**
+
+### Option B: Create a New Browser Key (If the old one was deleted)
+
+1. **Go to Google Cloud Console:**
+   - https://console.cloud.google.com/apis/credentials?project=passion-project-2eb1c
+
+2. **Click "+ CREATE CREDENTIALS" → "API key"**
+
+3. **Name it:** "Browser key (auto created by Firebase)" or "Firebase Browser Key"
+
+4. **Restrict it with ALL required APIs:**
+   - ✅ Generative Language API
+   - ✅ Maps JavaScript API
+   - ✅ Geocoding API
+   - ✅ Places API (New)
+   - ✅ Directions API
+   - ✅ Firebase APIs
+
+5. **Copy the new key**
+
+6. **Update your Firebase Web App:**
+   - Go back to: https://console.firebase.google.com/project/passion-project-2eb1c/settings/general
+   - Scroll to "Your apps"
+   - Click on your web app
+   - You may need to **delete and recreate the web app** to update the API key, OR
+   - The key might auto-update if it's the same project
+
+## Method 3: Update .env AND Firebase Config Match
+
+**Important:** Make sure your `.env` file's `REACT_APP_FIREBASE_API_KEY` matches the Browser key in Firebase project settings:
+
+1. **Check your current Browser key:**
+   - Go to: https://console.cloud.google.com/apis/credentials?project=passion-project-2eb1c
+   - Find "Browser key (auto created by Firebase)"
+   - Copy that key
+
+2. **Update your `.env` file:**
+   ```
+   REACT_APP_FIREBASE_API_KEY=<the-browser-key-from-firebase>
+   ```
+
+3. **Restart your dev server**
+
+## Quick Check: Which Key is Firebase Using?
+
+1. **Go to Firebase Console:**
+   - https://console.firebase.google.com/project/passion-project-2eb1c/settings/general
+
+2. **Scroll to "Your apps" → Click on your web app**
+
+3. **Look at the config** - the `apiKey` value is what Firebase is using
+
+4. **Compare it to:**
+   - Your `.env` file: `REACT_APP_FIREBASE_API_KEY`
+   - Your Google Cloud Console Browser key
+
+5. **They should all match!**
+
+## If You Deleted the Old Browser Key
+
+If you deleted the old "Browser key (auto created by Firebase)", you have two options:
+
+### Option 1: Let Firebase Auto-Create a New One
+- Firebase will automatically create a new Browser key
+- But you need to add Generative Language API to it
+
+### Option 2: Create a New One Manually
+- Create a new API key in Google Cloud Console
+- Name it "Browser key" 
+- Add all required APIs
+- Update your `.env` to match
+
+## The Key Point
+
+**Firebase AI Logic uses the `apiKey` from your Firebase config**, which comes from:
+1. Your `.env` file (`REACT_APP_FIREBASE_API_KEY`)
+2. Which should match the "Browser key" in Google Cloud Console
+3. Which is what Firebase project settings shows
+
+**Make sure all three match and have Generative Language API enabled!**
+

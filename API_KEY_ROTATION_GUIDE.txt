@@ -1,0 +1,124 @@
+# API Key Rotation Guide
+
+Your API key `AIzaSyC3k78W-m1QZNGj4XcE09CM6m9O7XFnkCo` was exposed in SETUP_INSTRUCTIONS.txt. Follow these steps to secure your project.
+
+## Step 1: Create a New API Key
+
+1. Go to: https://console.cloud.google.com/apis/credentials?project=passion-project-2eb1c
+
+2. Click **"+ CREATE CREDENTIALS"** → **"API key"**
+
+3. A new API key will be generated. **Copy it immediately** - you won't be able to see it again!
+
+4. Click **"RESTRICT KEY"** to configure it:
+
+   **API restrictions:**
+   - Select "Restrict key"
+   - Check **ALL** of these APIs (your app uses all of them):
+     - ✅ **Maps JavaScript API** (REQUIRED - for displaying maps)
+     - ✅ **Geocoding API** (REQUIRED - for address to coordinates conversion)
+     - ✅ **Places API (New)** or **Places API** (REQUIRED - for autocomplete/search)
+     - ✅ **Generative Language API** (REQUIRED - for Gemini/Firebase AI Logic)
+     - ✅ **Directions API** (RECOMMENDED - for transit/walking/driving directions)
+     - ✅ **Firebase APIs** (usually auto-enabled)
+   
+   **See `COMPLETE_API_LIST.md` for detailed explanation of what each API does!**
+
+   **Application restrictions:**
+   - For development: Select "None" temporarily
+   - For production: Select "HTTP referrers" and add:
+     - `http://localhost:3000/*`
+     - `http://127.0.0.1:3000/*`
+     - `https://your-production-domain.com/*`
+     - `https://passion-project-2eb1c.web.app/*` (if using Firebase Hosting)
+     - `https://passion-project-2eb1c.firebaseapp.com/*`
+
+5. Click **"SAVE"**
+
+## Step 1.5: Enable Generative Language API (Required for Gemini)
+
+**IMPORTANT:** Firebase AI Logic (Gemini) requires the Generative Language API to be enabled:
+
+1. Go to: https://console.cloud.google.com/apis/library?project=passion-project-2eb1c
+
+2. Search for **"Generative Language API"**
+
+3. Click on it and click **"ENABLE"**
+
+4. Wait for it to enable (usually takes a few seconds)
+
+5. Also check that **"Firebase AI Logic API"** is enabled (if available)
+
+## Step 2: Revoke the Old API Key
+
+1. Still in: https://console.cloud.google.com/apis/credentials?project=passion-project-2eb1c
+
+2. Find the key: **"Browser key (auto created by Firebase)"** or search for `AIzaSyC3k78W-m1QZNGj4XcE09CM6m9O7XFnkCo`
+
+3. Click on it to open settings
+
+4. Click **"DELETE KEY"** or **"RESTRICT KEY"** and disable all APIs
+
+5. If deleting, confirm the deletion
+
+## Step 3: Update Your .env File
+
+Replace the old key with your new key in `.env`:
+
+```
+REACT_APP_FIREBASE_API_KEY=YOUR_NEW_KEY_HERE
+REACT_APP_GOOGLE_MAPS_API_KEY=YOUR_NEW_KEY_HERE
+```
+
+**Note:** Both Firebase and Google Maps can use the same API key, or you can create separate keys for better security.
+
+## Step 4: Clean Up Old Build Files
+
+**IMPORTANT:** Your old build files contain the exposed key. Delete and rebuild:
+
+```bash
+# Remove old build folder
+rm -rf build/
+
+# Rebuild with new key (after updating .env)
+npm run build
+```
+
+## Step 5: Test the New Key
+
+1. Restart your dev server:
+   ```bash
+   npm start
+   ```
+
+2. Hard refresh your browser (Cmd+Shift+R on Mac, Ctrl+Shift+R on Windows)
+
+3. Check the browser console for any API errors
+
+4. Test your maps functionality
+
+## Step 6: Update Firebase Project Settings (if needed)
+
+If you're using Firebase Hosting, you may also need to update the API key in:
+- Firebase Console → Project Settings → General → Your apps → Web app config
+
+## Important Notes
+
+- ⚠️ **The old key is now compromised** - make sure to delete/restrict it immediately
+- 🔒 **Never commit API keys** to git (your .env is already in .gitignore - good!)
+- 📝 **Document keys securely** - use a password manager or secure notes, not plain text files
+- 🔄 **Rotate keys regularly** - especially if they've been exposed
+
+## If You Need Separate Keys
+
+You can create separate keys for Firebase and Google Maps:
+1. Create one key for Firebase APIs only
+2. Create another key for Google Maps APIs only
+3. Update your .env accordingly:
+   ```
+   REACT_APP_FIREBASE_API_KEY=firebase_key_here
+   REACT_APP_GOOGLE_MAPS_API_KEY=maps_key_here
+   ```
+
+This provides better security isolation.
+

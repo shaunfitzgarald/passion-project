@@ -1,0 +1,140 @@
+# Replace the Exposed API Key - Complete Guide
+
+You restored the old exposed key (`AIzaSyC3k78W-m1QZNGj4XcE09CM6m9O7XFnkCo`) to get Gemini working, but now you need to replace it with a brand new key. Here's how:
+
+## Step 1: Create a Brand New API Key
+
+1. **Go to Google Cloud Console:**
+   - https://console.cloud.google.com/apis/credentials?project=passion-project-2eb1c
+
+2. **Click "+ CREATE CREDENTIALS" → "API key"**
+
+3. **A new key will be generated** - **COPY IT IMMEDIATELY!** You won't see it again.
+
+4. **Name it** (optional but recommended):
+   - Click "RESTRICT KEY" or click on the key name
+   - Give it a name like: "New Firebase + Maps Key" or "Passion Project Main Key"
+
+## Step 2: Configure the New Key with ALL Required APIs
+
+1. **Under "API restrictions", select "Restrict key"**
+
+2. **Check ALL of these APIs:**
+   - ✅ **Generative Language API** (REQUIRED for Gemini!)
+   - ✅ **Maps JavaScript API** (for maps)
+   - ✅ **Geocoding API** (for address conversion)
+   - ✅ **Places API (New)** or **Places API** (for autocomplete/search)
+   - ✅ **Directions API** (for transit/walking/driving directions)
+   - ✅ **Firebase APIs** (if listed)
+
+3. **Under "Application restrictions":**
+   - For development: Select "None" temporarily
+   - For production: Add HTTP referrers:
+     - `http://localhost:3000/*`
+     - `http://127.0.0.1:3000/*`
+     - `https://passion-project-2eb1c.web.app/*`
+     - `https://passion-project-2eb1c.firebaseapp.com/*`
+
+4. **Click "SAVE"**
+
+## Step 3: Update Your .env File
+
+1. **Open your `.env` file**
+
+2. **Replace the old exposed key with your new key:**
+   ```
+   REACT_APP_FIREBASE_API_KEY=YOUR_NEW_KEY_HERE
+   REACT_APP_GOOGLE_MAPS_API_KEY=YOUR_NEW_KEY_HERE
+   ```
+   
+   **Note:** You can use the same new key for both, or create separate keys.
+
+3. **Save the file**
+
+## Step 4: Update Firebase Project Settings
+
+The Firebase project might be using the old "Browser key". You need to make sure it uses your new key:
+
+### Option A: Update the Browser Key (If it still exists)
+
+1. **Go to Google Cloud Console:**
+   - https://console.cloud.google.com/apis/credentials?project=passion-project-2eb1c
+
+2. **Find "Browser key (auto created by Firebase)"**
+
+3. **Click on it**
+
+4. **You have two options:**
+   - **Option 1:** Delete it and Firebase will auto-create a new one (then add APIs to the new one)
+   - **Option 2:** Update it to match your new key (but this won't work if you want a completely different key)
+
+### Option B: Use Your New Key as the Browser Key
+
+1. **In Google Cloud Console, find your new API key**
+
+2. **Rename it to:** "Browser key (auto created by Firebase)" or just use it as-is
+
+3. **Update your `.env` to use this new key**
+
+4. **Firebase will use whatever key is in your Firebase config** (which comes from `.env`)
+
+## Step 5: Verify the New Key Works
+
+1. **Restart your dev server:**
+   ```bash
+   # Stop server (Ctrl+C)
+   npm start
+   ```
+
+2. **Hard refresh browser:** Cmd+Shift+R (Mac) or Ctrl+Shift+R (Windows)
+
+3. **Test Gemini AI Assistant** - it should work now!
+
+4. **Test Maps** - make sure maps still load
+
+5. **Test Geocoding** - try adding a location with an address
+
+## Step 6: Delete/Revoke the Old Exposed Key
+
+**ONLY AFTER everything works with the new key:**
+
+1. **Go to Google Cloud Console:**
+   - https://console.cloud.google.com/apis/credentials?project=passion-project-2eb1c
+
+2. **Find the old exposed key:** `AIzaSyC3k78W-m1QZNGj4XcE09CM6m9O7XFnkCo`
+
+3. **Click on it**
+
+4. **Click "DELETE KEY"** or **"RESTRICT KEY"** and disable all APIs
+
+5. **Confirm deletion**
+
+## Important Notes
+
+- ⚠️ **Don't delete the old key until the new one is working!**
+- 🔒 **The new key should have ALL the APIs enabled** (especially Generative Language API)
+- 📝 **Make sure your `.env` file has the new key**
+- 🔄 **Restart your dev server after updating `.env`**
+- ✅ **Test everything before deleting the old key**
+
+## Quick Checklist
+
+- [ ] Created new API key
+- [ ] Added ALL required APIs (especially Generative Language API)
+- [ ] Updated `.env` file with new key
+- [ ] Restarted dev server
+- [ ] Tested Gemini AI - works!
+- [ ] Tested Maps - works!
+- [ ] Tested Geocoding - works!
+- [ ] Deleted old exposed key
+
+## If Something Breaks
+
+If something stops working after switching keys:
+
+1. **Check that the new key has all required APIs enabled**
+2. **Verify your `.env` file has the correct key**
+3. **Make sure you restarted the dev server**
+4. **Check browser console for specific error messages**
+5. **You can temporarily restore the old key if needed** (but delete it once fixed!)
+
