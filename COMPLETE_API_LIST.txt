@@ -1,0 +1,80 @@
+# Complete List of APIs Your App Uses
+
+Based on your codebase, here are **ALL** the APIs you need to enable for your API key:
+
+## Required APIs (Must Have)
+
+1. ✅ **Maps JavaScript API**
+   - Used for: Displaying interactive maps
+   - Location: `src/components/MapView.js`
+
+2. ✅ **Geocoding API**
+   - Used for: Converting addresses to coordinates (and vice versa)
+   - Location: `src/services/geocodingService.js`
+   - Functions: `geocodeAddress()`, `reverseGeocode()`
+
+3. ✅ **Places API (New)** or **Places API**
+   - Used for: Place search, autocomplete (loaded as library)
+   - Location: `src/components/MapView.js` (libraries: ['places'])
+   - Also used in: `src/components/AddEditLocation.js`, `src/components/BatchImport.js`
+
+4. ✅ **Generative Language API**
+   - Used for: Firebase AI Logic / Gemini AI assistant
+   - Location: `src/services/geminiService.js`
+   - **This is the one causing your current error!**
+
+## Optional APIs (Recommended)
+
+5. ⚠️ **Directions API**
+   - Used for: Transit, walking, and driving directions
+   - Note: Your code currently opens Google Maps URLs, but if you want to embed directions in your app, you'll need this
+   - Location: `src/utils/transitUtils.js` (commented as using Directions API)
+
+## Firebase APIs (Usually Auto-Enabled)
+
+6. ✅ **Firebase APIs** (various)
+   - Authentication API
+   - Firestore API
+   - Storage API
+   - These are usually enabled automatically when you create a Firebase project
+
+## Complete API Restrictions Checklist
+
+When setting up your API key restrictions, make sure to check:
+
+- [ ] Maps JavaScript API
+- [ ] Geocoding API
+- [ ] Places API (New) - **or** Places API (legacy)
+- [ ] **Generative Language API** ← **CRITICAL FOR GEMINI**
+- [ ] Directions API (if you want embedded directions)
+- [ ] Firebase APIs (usually auto-enabled, but check if needed)
+
+## Quick Setup Steps
+
+1. Go to: https://console.cloud.google.com/apis/credentials?project=passion-project-2eb1c
+
+2. Click on your API key (or create a new one)
+
+3. Under "API restrictions", select "Restrict key"
+
+4. Check **ALL** of these:
+   - ✅ Maps JavaScript API
+   - ✅ Geocoding API
+   - ✅ Places API (New) - **or** Places API
+   - ✅ **Generative Language API** ← **DON'T FORGET THIS ONE!**
+   - ✅ Directions API (optional but recommended)
+
+5. Click "SAVE"
+
+6. Also make sure these APIs are **ENABLED** in the API Library:
+   - Go to: https://console.cloud.google.com/apis/library?project=passion-project-2eb1c
+   - Search and enable each API if not already enabled
+
+## Why You Need All of These
+
+- **Maps JavaScript API**: Without this, your map won't load
+- **Geocoding API**: Without this, address-to-coordinates conversion fails
+- **Places API**: Without this, autocomplete and place search won't work
+- **Generative Language API**: Without this, your Gemini AI assistant won't work (this is your current error!)
+- **Directions API**: Without this, embedded directions won't work (though opening Google Maps URLs will still work)
+

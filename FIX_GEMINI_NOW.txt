@@ -1,0 +1,64 @@
+# Fix Gemini Error - Step by Step
+
+## Current Situation
+Your `.env` has:
+- `REACT_APP_FIREBASE_API_KEY=AIzaSyAS8jk3Na71bDj6JKOqg9NqeOqOUZA-JY4` ← This one is used by Gemini
+- `REACT_APP_GOOGLE_MAPS_API_KEY=AIzaSyCaRVd7ivIdK14OyryxbdlJcusdY7z7hqw`
+
+**The Firebase API key is the one that needs Generative Language API access!**
+
+## Fix Steps
+
+### Step 1: Check Your Firebase API Key
+1. Go to: https://console.cloud.google.com/apis/credentials?project=passion-project-2eb1c
+2. Find the key: `AIzaSyAS8jk3Na71bDj6JKOqg9NqeOqOUZA-JY4`
+3. Click on it
+
+### Step 2: Add ALL Required APIs to This Key
+1. Under "API restrictions", click "Edit"
+2. Make sure "Restrict key" is selected
+3. Check **ALL** of these APIs:
+   - ✅ **Generative Language API** (MUST HAVE THIS for Gemini!)
+   - ✅ **Maps JavaScript API** (for maps)
+   - ✅ **Geocoding API** (for address conversion)
+   - ✅ **Places API (New)** or **Places API** (for autocomplete/search)
+   - ✅ **Directions API** (for transit/walking/driving directions - optional but recommended)
+   - ✅ **Firebase APIs** (if needed)
+4. Click "SAVE"
+
+**See `COMPLETE_API_LIST.md` for the full list of all APIs your app uses!**
+
+### Step 3: Verify API is Enabled
+1. Go to: https://console.cloud.google.com/apis/library?project=passion-project-2eb1c
+2. Search for "Generative Language API"
+3. Make sure it shows "ENABLED" (not "Enable")
+
+### Step 4: Restart Everything
+```bash
+# Stop your dev server (Ctrl+C)
+# Then restart:
+npm start
+```
+
+### Step 5: Hard Refresh Browser
+- Mac: Cmd+Shift+R
+- Windows: Ctrl+Shift+R
+
+## If It Still Doesn't Work
+
+The key might be expired. Create a new one:
+
+1. Create a new API key with ALL these APIs:
+   - Generative Language API
+   - Maps JavaScript API
+   - Firebase APIs
+
+2. Update your `.env`:
+   ```
+   REACT_APP_FIREBASE_API_KEY=YOUR_NEW_KEY_HERE
+   REACT_APP_GOOGLE_MAPS_API_KEY=YOUR_NEW_KEY_HERE
+   ```
+   (You can use the same key for both, or different ones)
+
+3. Restart server
+

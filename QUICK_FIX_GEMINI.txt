@@ -1,0 +1,42 @@
+# Quick Fix for Gemini API Error
+
+## The Problem
+Your Gemini/Firebase AI Logic is failing because:
+1. The Generative Language API isn't enabled, OR
+2. Your API key doesn't have access to it, OR  
+3. Your API key is expired/revoked
+
+## Quick Fix Steps
+
+### Option A: If you already created a new API key
+
+1. **Enable Generative Language API:**
+   - Go to: https://console.cloud.google.com/apis/library?project=passion-project-2eb1c
+   - Search for "Generative Language API"
+   - Click "ENABLE"
+
+2. **Update your API key restrictions:**
+   - Go to: https://console.cloud.google.com/apis/credentials?project=passion-project-2eb1c
+   - Click on your new API key
+   - Under "API restrictions", make sure **"Generative Language API"** is checked
+   - Click "SAVE"
+
+3. **Update your .env file:**
+   - Make sure `REACT_APP_FIREBASE_API_KEY` has your new key
+   - Restart your dev server: `npm start`
+
+### Option B: If you haven't created a new API key yet
+
+Follow the full guide in `API_KEY_ROTATION_GUIDE.md`, but make sure to:
+- ✅ Enable "Generative Language API" in API restrictions
+- ✅ Enable the API in the API Library first
+
+## Verify It Works
+
+After enabling and updating:
+1. Restart your dev server
+2. Try using the AI Assistant feature
+3. Check browser console for errors
+
+If you still get errors, the API might take 1-2 minutes to propagate.
+
