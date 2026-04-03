@@ -18,6 +18,11 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
+console.log('Firebase Config Debug:', {
+  apiKey: firebaseConfig.apiKey, // Printing full key to be sure since user is stuck
+  projectId: firebaseConfig.projectId
+});
+
 // Initialize Firebase services
 export const auth = getAuth(app);
 export const db = getFirestore(app);
