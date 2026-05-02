@@ -41,6 +41,7 @@ const MapViewPage = ({ children }) => {
   const [favorites, setFavorites] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
   const [comparisonDialogOpen, setComparisonDialogOpen] = useState(false);
+  const [isLocationSelected, setIsLocationSelected] = useState(false);
 
   // Check if we're on profile or settings page
   const isProfilePage = location.pathname === '/profile';
@@ -414,12 +415,14 @@ const MapViewPage = ({ children }) => {
           <>
             {tabValue === 0 && (
               <Box sx={{ height: '100%', width: '100%', position: 'relative' }}>
-                <MapFilters
-                  filters={filters}
-                  onFiltersChange={setFilters}
-                  showFavorites={!!user}
-                  userLocation={userLocation}
-                />
+                {!isLocationSelected && (
+                  <MapFilters
+                    filters={filters}
+                    onFiltersChange={setFilters}
+                    showFavorites={!!user}
+                    userLocation={userLocation}
+                  />
+                )}
                 <EmergencyResources />
                 <MapView
                   center={mapCenter}
@@ -432,6 +435,7 @@ const MapViewPage = ({ children }) => {
                   onUserLocationRequest={handleUserLocationRequest}
                   onLocationEdit={isAdmin ? handleEditLocation : null}
                   allLocations={locations}
+                  onSelectionChange={setIsLocationSelected}
                   onLocationClick={(location, options = { centerMap: true }) => {
                     // Center map on clicked location only if requested
                     if (location.latitude && location.longitude && options.centerMap) {

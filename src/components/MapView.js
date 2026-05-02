@@ -158,6 +158,7 @@ const MapView = ({
   onLocationEdit = null,
   allLocations = [],
   onLocationClick = null,
+  onSelectionChange = null,
 }) => {
   const { isDarkMode } = useTheme();
   const mapRef = useRef(null);
@@ -170,6 +171,12 @@ const MapView = ({
   const [reportingLocation, setReportingLocation] = useState(null);
   const [nearbyBusStops, setNearbyBusStops] = useState([]);
   const [showBusStops, setShowBusStops] = useState(false);
+
+  useEffect(() => {
+    if (onSelectionChange) {
+      onSelectionChange(selectedMarker !== null);
+    }
+  }, [selectedMarker, onSelectionChange]);
 
   // Icon mapping
   const getIconComponent = (iconName) => {
