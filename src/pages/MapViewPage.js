@@ -432,9 +432,9 @@ const MapViewPage = ({ children }) => {
                   onUserLocationRequest={handleUserLocationRequest}
                   onLocationEdit={isAdmin ? handleEditLocation : null}
                   allLocations={locations}
-                  onLocationClick={(location) => {
-                    // Center map on clicked location
-                    if (location.latitude && location.longitude) {
+                  onLocationClick={(location, options = { centerMap: true }) => {
+                    // Center map on clicked location only if requested
+                    if (location.latitude && location.longitude && options.centerMap) {
                       setMapCenter({ lat: location.latitude, lng: location.longitude });
                       setMapZoom(15);
                     }

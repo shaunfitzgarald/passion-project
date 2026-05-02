@@ -543,8 +543,8 @@ const MapView = ({
         <Box
           sx={{
             position: 'absolute',
-            top: 20,
-            right: 20,
+            bottom: 120,
+            right: 12,
             zIndex: 1000,
           }}
         >
@@ -663,9 +663,9 @@ const MapView = ({
                           if (location && location.id) {
                             addToHistory(location);
                           }
-                          // Call onLocationClick if provided
+                          // Call onLocationClick if provided (but don't force center map)
                           if (onLocationClick && location) {
-                            onLocationClick(location);
+                            onLocationClick(location, { centerMap: false });
                           }
                         }}
                         onMouseOver={() => setHoveredMarker(index)}
@@ -681,7 +681,27 @@ const MapView = ({
                     maxWidth: 300,
                   }}
                 >
-                  <Paper sx={{ p: 2, maxWidth: 300, bgcolor: '#2a2a2a', color: '#fff' }}>
+                  <Paper sx={{ 
+                    p: 2, 
+                    maxWidth: 300, 
+                    maxHeight: '60vh', 
+                    overflowY: 'auto',
+                    bgcolor: '#2a2a2a', 
+                    color: '#fff',
+                    '&::-webkit-scrollbar': {
+                      width: '6px',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                      background: 'transparent',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      background: '#555',
+                      borderRadius: '3px',
+                    },
+                    '&::-webkit-scrollbar-thumb:hover': {
+                      background: '#777',
+                    }
+                  }}>
                     <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: '#fff' }}>
                       {location.name}
                     </Typography>
@@ -860,7 +880,7 @@ const MapView = ({
                         <Button
                           variant="contained"
                           size="small"
-                          startIcon={<DirectionsBus />}
+                          startIcon={<Directions />}
                           onClick={() => {
                             const url = getDirectionsUrl(location, 'transit');
                             window.open(url, '_blank');
@@ -871,65 +891,26 @@ const MapView = ({
                             flex: 1,
                             minWidth: '100px',
                           }}
-                          title="Get transit directions (bus/train) - Recommended"
+                          title="Get directions (defaults to transit)"
                         >
-                          Transit
-                        </Button>
-                        {distance !== null && distance < 1 && (
-                          <Button
-                            variant="contained"
-                            size="small"
-                            startIcon={<DirectionsWalk />}
-                            onClick={() => {
-                              const url = getDirectionsUrl(location, 'walking');
-                              window.open(url, '_blank');
-                            }}
-                            sx={{ 
-                              bgcolor: '#4CAF50',
-                              '&:hover': { bgcolor: '#388e3c' },
-                              flex: 1,
-                              minWidth: '80px',
-                            }}
-                            title="Get walking directions"
-                          >
-                            Walk
-                          </Button>
-                        )}
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={<Directions />}
-                          onClick={() => {
-                            const url = getDirectionsUrl(location, 'driving');
-                            window.open(url, '_blank');
-                          }}
-                          sx={{ 
-                            borderColor: '#555',
-                            color: '#fff',
-                            fontSize: '0.75rem',
-                            '&:hover': { borderColor: '#777', bgcolor: 'rgba(255,255,255,0.05)' },
-                          }}
-                          title="Get driving directions"
-                        >
-                          Drive
+                          Directions
                         </Button>
                         
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={<Share />}
-                          onClick={async () => {
-                            await shareLocation(location);
-                          }}
-                          sx={{ 
-                            borderColor: '#555',
-                            color: '#fff',
-                            fontSize: '0.75rem',
-                            '&:hover': { borderColor: '#777', bgcolor: 'rgba(255,255,255,0.05)' },
-                          }}
-                        >
-                          Share
-                        </Button>
+                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                          <IconButton
+                            size="small"
+                            onClick={async () => {
+                              await shareLocation(location);
+                            }}
+                            sx={{ 
+                              color: '#fff',
+                              border: '1px solid #555',
+                              '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
+                            }}
+                            title="Share location"
+                          >
+                            <Share sx={{ fontSize: 18 }} />
+                          </IconButton>
                         
                         {onLocationEdit && (
                           <IconButton
@@ -960,21 +941,22 @@ const MapView = ({
                           </IconButton>
                         )}
 
-                        <IconButton
-                          size="small"
-                          onClick={() => {
-                            setReportingLocation(location);
-                            setReportDialogOpen(true);
-                          }}
-                          sx={{ 
-                            color: '#ff9800',
-                            border: '1px solid #555',
-                            '&:hover': { bgcolor: 'rgba(255, 152, 0, 0.1)' },
-                          }}
-                          title="Report incorrect information"
-                        >
-                          <Flag />
-                        </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={() => {
+                              setReportingLocation(location);
+                              setReportDialogOpen(true);
+                            }}
+                            sx={{ 
+                              color: '#ff9800',
+                              border: '1px solid #555',
+                              '&:hover': { bgcolor: 'rgba(255, 152, 0, 0.1)' },
+                            }}
+                            title="Report incorrect information"
+                          >
+                            <Flag sx={{ fontSize: 18 }} />
+                          </IconButton>
+                        </Box>
                       </Box>
                     </Box>
                   </Paper>
@@ -1017,7 +999,7 @@ const MapView = ({
             if (markerIndex !== -1) {
               setSelectedMarker(markerIndex);
               if (onLocationClick) {
-                onLocationClick(loc);
+                onLocationClick(loc, { centerMap: true });
               }
             }
           }}
