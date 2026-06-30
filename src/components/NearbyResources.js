@@ -20,7 +20,7 @@ import { getLocations } from '../services/locationService';
 import { calculateDistance, formatDistance } from '../utils/locationUtils';
 
 const NearbyResources = ({ currentLocation, allLocations, onLocationClick }) => {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [nearbyLocations, setNearbyLocations] = useState([]);
   const [loading, setLoading] = useState(false);
 
